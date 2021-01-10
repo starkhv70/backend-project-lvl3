@@ -1,0 +1,40 @@
+{
+  "name": "@hexlet/code",
+  "version": "0.0.1",
+  "description": "Load and save Web page on local file system.",
+  "main": "src/page-loader.js",
+  "type": "module",
+  "bin": {
+    "gendiff": "bin/page-loader.js"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {}
+  },
+  "scripts": {
+    "test": "npx -n --experimental-vm-modules jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/starkhv70/backend-project-lvl3.git"
+  },
+  "author": "Beklemishev Konstantin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/starkhv70/backend-project-lvl3/issues"
+  },
+  "homepage": "https://github.com/starkhv70/backend-project-lvl3#readme",
+  "dependencies": {
+    "commander": "^6.1.0",
+    "ini": "^1.3.5",
+    "js-yaml": "^3.14.0",
+    "lodash": "^4.17.20"
+  },
+  "devDependencies": {
+    "@jest/globals": "^26.4.2",
+    "eslint": "^7.9.0",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-import": "^2.22.0",
+    "jest": "^26.4.2"
+  }
+}
