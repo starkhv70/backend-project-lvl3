@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 const baseUrl = 'https://ru.hexlet.io';
 const relativePath = '/courses';
 const wrongRelativePath = '/error';
-const pageUrl = new URL(baseUrl, relativePath);
+const pageUrl = new URL(relativePath, baseUrl);
 const pageFileName = 'ru-hexlet-io-courses.html';
 let tmpDir = '';
 let expectedHTML = '';
@@ -22,22 +22,22 @@ const readFile = (filename) => fsp.readFile(getFixturePath(filename), 'utf-8');
 nock.disableNetConnect();
 
 beforeAll(async () => {
-  tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'page-loader'));
+  tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
   expectedHTML = await readFile(pageFileName);
   nock(baseUrl)
     .get(relativePath)
-    .reply(200, expectedHTML)
+    .reply(200, expectedHTML.trim())
     .get(wrongRelativePath)
     .reply(404, '');
 });
 
-test('load page', async () => {
+test('load page', async (done) => {
   const filepath = path.join(tmpDir, pageFileName);
 
-  await pageLoader(pageUrl.toString(), tmpDir);
-  // Хочу добавить проверку, что файл создан, но не знаю как лучше сделать
-  const HTMLbody = await fsp.readFile(filepath);
-  expect(HTMLbody).toEqual(expectedHTML);
+  await pageLoader(pageUrl, tmpDir);
+  const HTMLbody = await fsp.readFile(filepath, 'utf-8');
+  expect(HTMLbody).toEqual(expectedHTML.trim());
+  done();
 });
 
 test('Handling file systems errors', async () => {
@@ -50,7 +50,7 @@ test('Handling file systems errors', async () => {
 
 test('Handling network errors', async () => {
   const badBaseUrl = 'https://localhost.io';
-  const wrongPageUrl = new URL(baseUrl, wrongRelativePath);
+  const wrongPageUrl = new URL(wrongRelativePath, baseUrl);
 
   expect(pageLoader(badBaseUrl, tmpDir)).rejects.toThrow();
   expect(pageLoader(wrongPageUrl.toString(), tmpDir)).rejects.toThrow();
