@@ -42,10 +42,10 @@ test('load page', async (done) => {
 
 test('Handling file systems errors', async () => {
   const inaccesibleDir = '/etc';
-  const filepath = path.join(tmpDir, 'unavalible');
+  const unavalibleFilepath = path.join(tmpDir, 'unavalible');
 
   expect(pageLoader(pageUrl.toString(), inaccesibleDir)).rejects.toThrow();
-  expect(pageLoader(pageUrl.toString(), filepath)).rejects.toThrow();
+  expect(pageLoader(pageUrl.toString(), unavalibleFilepath)).rejects.toThrow();
 });
 
 test('Handling network errors', async () => {

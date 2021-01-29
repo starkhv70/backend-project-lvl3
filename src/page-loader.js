@@ -5,7 +5,7 @@ import path from 'path';
 const convertUrlToFilename = (url) => {
   const { hostname } = url;
   const pathname = (url.pathname !== '/') ? url.pathname : '';
-  return `${`${hostname}${pathname}`.replace(/(\/|\.)/g, '-')}.html`;
+  return `${`${hostname}${pathname}`.replace(/[^A-Za-z0-9]/g, '-')}.html`;
 };
 
 const pageLoader = (pageUrl, outputDir = process.cwd()) => {
@@ -13,8 +13,7 @@ const pageLoader = (pageUrl, outputDir = process.cwd()) => {
   return axios.get(url.toString())
     .then((response) => {
       const filename = convertUrlToFilename(url);
-      const filepath = path.join(outputDir, filename);
-      console.log(filepath);
+      const filepath = path.resolve(outputDir, filename);
       fsp.writeFile(filepath, response.data);
     });
 };
