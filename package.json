@@ -31,7 +31,6 @@
     "nock": "^13.0.6"
   },
   "devDependencies": {
-    "@jest/globals": "^26.4.2",
     "eslint": "^7.9.0",
     "eslint-config-airbnb-base": "^14.2.0",
     "eslint-plugin-import": "^2.22.0",
