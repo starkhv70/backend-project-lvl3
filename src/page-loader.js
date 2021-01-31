@@ -1,21 +1,37 @@
 import axios from 'axios';
+import cheerio from 'cheerio';
 import { promises as fsp } from 'fs';
 import path from 'path';
 
-const convertUrlToFilename = (url) => {
+const convertUrlToFilename = (url, fileExt) => `${url.replace(/[^A-Za-z0-9]/g, '-')}.${fileExt}`;
+
+const loadResources = (htmlData) => {
+
+};
+
+const saveResources = (resources) => {
+
+};
+
+const savePage = (url, outputDir, htmlData) => {
   const { hostname } = url;
   const pathname = (url.pathname !== '/') ? url.pathname : '';
-  return `${`${hostname}${pathname}`.replace(/[^A-Za-z0-9]/g, '-')}.html`;
+  const filename = convertUrlToFilename(`${hostname}${pathname}`, 'html');
+  const filepath = path.resolve(outputDir, filename);
+  return fsp.writeFile(filepath, htmlData);
 };
 
 const pageLoader = (pageUrl, outputDir = process.cwd()) => {
   const url = new URL(pageUrl);
+
+  let htmlData;
   return axios.get(url.toString())
     .then((response) => {
-      const filename = convertUrlToFilename(url);
-      const filepath = path.resolve(outputDir, filename);
-      fsp.writeFile(filepath, response.data);
-    });
+      htmlData = response.data;
+    })
+    .then(() => loadResources(htmlData))
+    .then((resources) => saveResources(resources))
+    .then(() => savePage(url, outputDir, htmlData));
 };
 
 export default pageLoader;

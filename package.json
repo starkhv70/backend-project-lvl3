@@ -26,6 +26,7 @@
   "homepage": "https://github.com/starkhv70/backend-project-lvl3#readme",
   "dependencies": {
     "axios": "^0.21.1",
+    "cheerio": "^1.0.0-rc.5",
     "commander": "^6.1.0",
     "lodash": "^4.17.20",
     "nock": "^13.0.6"
