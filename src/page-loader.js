@@ -3,10 +3,19 @@ import cheerio from 'cheerio';
 import { promises as fsp } from 'fs';
 import path from 'path';
 
+const tagsToLoad = [
+  {
+    name: 'img',
+    attr: 'src',
+    responseType: 'stream',
+  },
+];
 const convertUrlToFilename = (url, fileExt) => `${url.replace(/[^A-Za-z0-9]/g, '-')}.${fileExt}`;
 
 const loadResources = (htmlData) => {
-
+  const $ = cheerio.load(htmlData);
+  const promises = tagsToLoad.map((tag) => {});
+  return Promise.all(promises);
 };
 
 const saveResources = (resources) => {
