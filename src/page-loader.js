@@ -9,14 +9,14 @@ const pageLoader = (url, outputDir = process.cwd()) => {
   const pageFilepath = path.resolve(outputDir, pageFilename);
   const resourceDir = convertUrlToDirname(pageUrl);
   const resourceDirpath = path.resolve(outputDir, resourceDir);
-  let htmlData;
+  let page;
   return axios.get(url.toString())
     .then(({ data }) => {
-      htmlData = data;
-      const localresources = processingResources(htmlData, url);
-      return fsp.mkdir(resourceDirpath).then((resources) => localresources);
+      const { modifiedHtml, resources } = processingResources(url, data, resourceDir);
+      page = modifiedHtml;
+      return fsp.mkdir(resourceDirpath).then((localResources) => resources);
     })
-    .then(() => fsp.writeFile(pageFilepath, htmlData));
+    .then(() => fsp.writeFile(pageFilepath, page));
 };
 
 export default pageLoader;

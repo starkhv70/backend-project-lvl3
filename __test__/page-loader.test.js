@@ -16,17 +16,18 @@ const pageFileName = 'ru-hexlet-io-courses.html';
 let tmpDir = '';
 let expectedHTML = '';
 
-const getFixturePath = (filename) => path.join(__dirname, '..', '__fixtures__', filename);
-const readFile = (filename) => fsp.readFile(getFixturePath(filename), 'utf-8');
+const getFixturePath = (...paths) => path.join(__dirname, '..', '__fixtures__', ...paths);
+const readFile = (...paths) => fsp.readFile(getFixturePath(...paths), 'utf-8');
 
 nock.disableNetConnect();
 
 beforeAll(async () => {
   tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-  expectedHTML = await readFile(pageFileName);
+  const originalHTML = await readFile(pageFileName);
+  expectedHTML = await readFile('expected', pageFileName);
   nock(baseUrl)
     .get(relativePath)
-    .reply(200, expectedHTML.trim())
+    .reply(200, originalHTML.trim())
     .get(wrongRelativePath)
     .reply(404, '');
 });
