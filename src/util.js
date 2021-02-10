@@ -1,3 +1,4 @@
+import axios from 'axios';
 import cheerio from 'cheerio';
 import path from 'path';
 
@@ -11,23 +12,29 @@ export const convertUrlToFilename = (pageUrl, fileExt = '.html') => `${convertNa
 
 export const convertUrlToDirname = (pageUrl, postfix = '_files') => `${convertName(pageUrl)}${postfix}`;
 
+export const load = (url) => axios.get(url, {
+  responseType: 'arraybuffer',
+}).then(({ data }) => data);
+
+export const buildPath = (outputDir, relativePath) => path.resolve(outputDir, relativePath);
+
 const buildResourceFilepath = (hostname, resourceDir, resourcePath) => {
   const { dir, name, ext } = path.parse(resourcePath);
   const resourceFilename = convertUrlToFilename(`${hostname}${dir}/${name}`, ext);
   return path.join(resourceDir, resourceFilename);
 };
 
-export const processingResources = (url, htmlData, resourceDir) => {
+export const processingResources = (pageurl, htmlData, resourceDir) => {
   const $ = cheerio.load(htmlData);
   const tags = Object.keys(tagAttributeMap);
   const tagsWithResources = tags.flatMap((tag) => $(`${tag}`).toArray());
-  const localResources = tagsWithResources.map((tag) => {
+  const resources = tagsWithResources.map((tag) => {
     const attrName = tagAttributeMap[tag.name];
-    const resourcePath = $(tag).attr(attrName);
-    const resourceUrl = new URL(resourcePath, url);
-    const resourceFilepath = buildResourceFilepath(url.hostname, resourceDir, resourcePath);
-    $(tag).attr(attrName, resourceFilepath);
-    return { resourceUrl, resourceFilepath };
+    const relativePath = $(tag).attr(attrName);
+    const resourceUrl = new URL(relativePath, pageurl);
+    const relativeFilepath = buildResourceFilepath(pageurl.hostname, resourceDir, relativePath);
+    $(tag).attr(attrName, relativeFilepath);
+    return { resourceUrl, relativeFilepath };
   });
-  return { modifiedHtml: $.html(), resources: localResources };
+  return { page: $.html(), resources };
 };

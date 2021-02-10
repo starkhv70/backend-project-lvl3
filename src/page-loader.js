@@ -1,22 +1,31 @@
-import axios from 'axios';
 import { promises as fsp } from 'fs';
-import path from 'path';
-import { convertUrlToFilename, convertUrlToDirname, processingResources } from './util.js';
+import {
+  convertUrlToFilename,
+  convertUrlToDirname,
+  buildPath,
+  processingResources,
+  load,
+} from './util.js';
 
-const pageLoader = (url, outputDir = process.cwd()) => {
-  const pageUrl = `${url.hostname}${(url.pathname !== '/') ? url.pathname : ''}`;
-  const pageFilename = convertUrlToFilename(pageUrl);
-  const pageFilepath = path.resolve(outputDir, pageFilename);
-  const resourceDir = convertUrlToDirname(pageUrl);
-  const resourceDirpath = path.resolve(outputDir, resourceDir);
-  let page;
-  return axios.get(url.toString())
-    .then(({ data }) => {
-      const { modifiedHtml, resources } = processingResources(url, data, resourceDir);
-      page = modifiedHtml;
-      return fsp.mkdir(resourceDirpath).then((localResources) => resources);
-    })
-    .then(() => fsp.writeFile(pageFilepath, page));
+const pageLoader = (pageUrl, outputDir = process.cwd()) => {
+  const { hostname, pathname } = pageUrl;
+  const formattedUrl = `${hostname}${(pathname !== '/') ? pathname : ''}`;
+  const pageFilename = convertUrlToFilename(formattedUrl);
+  const pageFilepath = buildPath(outputDir, pageFilename);
+  const resourceDir = convertUrlToDirname(formattedUrl);
+  const resourceDirpath = buildPath(outputDir, resourceDir);
+  return load(pageUrl.toString())
+    .then((data) => fsp.mkdir(resourceDirpath)
+      .then(() => processingResources(pageUrl, data, resourceDir)))
+    .then(({ page, resources }) => fsp.writeFile(pageFilepath, page)
+      .then(() => resources))
+    .then((resources) => {
+      const promises = resources.map(({ resourceUrl, relativeFilepath }) => {
+        const resourceFilepath = buildPath(outputDir, relativeFilepath);
+        return load(resourceUrl.toString()).then((data) => fsp.writeFile(resourceFilepath, data));
+      });
+      return Promise.all(promises);
+    });
 };
 
 export default pageLoader;
