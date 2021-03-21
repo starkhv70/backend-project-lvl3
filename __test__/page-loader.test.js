@@ -13,8 +13,28 @@ const relativePath = '/courses';
 const wrongRelativePath = '/error';
 const pageUrl = new URL(relativePath, baseUrl);
 const pageFileName = 'ru-hexlet-io-courses.html';
+const resourceDir = 'ru-hexlet-io-courses_files';
+const scope = nock(baseUrl).persist();
 let tmpDir = '';
 let expectedHTML = '';
+let resources = [
+  {
+    tag: 'img',
+    resourcePath: '/assets/professions/nodejs.png',
+    filename: 'assets-professions-nodejs.png',
+  },
+  {
+    tag: 'link',
+    resourcePath: '/assets/application.css',
+    filename: 'ru-hexlet-io-assets-application.css',
+  },
+  {
+    tag: 'script',
+    resourcePath: 'https://ru.hexlet.io/packs/js/runtime.js',
+    filename: 'ru-hexlet-io-packs-js-runtime.js',
+  },
+];
+const resourceFilenames = resources.map(({ filename }) => [filename]);
 
 const getFixturePath = (...paths) => path.join(__dirname, '..', '__fixtures__', ...paths);
 const readFile = (...paths) => fsp.readFile(getFixturePath(...paths), 'utf-8');
@@ -25,11 +45,19 @@ beforeAll(async () => {
   tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
   const originalHTML = await readFile(pageFileName);
   expectedHTML = await readFile('expected', pageFileName);
-  nock(baseUrl)
+  scope
     .get(relativePath)
     .reply(200, originalHTML.trim())
     .get(wrongRelativePath)
     .reply(404, '');
+
+  const promises = resources.map((resource) => readFile('expected', resourceDir, resource.filename)
+    .then((data) => ({ ...resource, data })));
+  resources = await Promise.all(promises);
+
+  resources.forEach(({ resourcePath, data }) => scope
+    .get(resourcePath)
+    .reply(200, data));
 });
 
 test('load page', async (done) => {
@@ -39,6 +67,13 @@ test('load page', async (done) => {
   const HTMLbody = await fsp.readFile(filepath, 'utf-8');
   expect(HTMLbody).toEqual(expectedHTML.trim());
   done();
+});
+
+test.each(resourceFilenames)('loaded resources to file: %s', async (filename) => {
+  const filepath = path.join(tmpDir, resourceDir, filename);
+  const content = await fsp.readFile(filepath, 'utf-8');
+  const expectedContent = await readFile('expected', filename);
+  expect(content).toEqual(expectedContent);
 });
 
 test('Handling file systems errors', async () => {

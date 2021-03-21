@@ -4,6 +4,8 @@ import path from 'path';
 
 const tagAttributeMap = {
   img: 'src',
+  link: 'href',
+  script: 'src',
 };
 
 const convertName = (pageUrl) => `${pageUrl.replace(/[^A-Za-z0-9]/g, '-')}`;
