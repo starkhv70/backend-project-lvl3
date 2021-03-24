@@ -1,28 +1,27 @@
 import { promises as fsp } from 'fs';
 import {
-  convertUrlToFilename,
-  convertUrlToDirname,
+  convertLinkToFilename,
+  convertLinkToDirname,
   buildPath,
   processingResources,
-  load,
+  loadData,
 } from './util.js';
 
 const pageLoader = (pageUrl, outputDir = process.cwd()) => {
-  const { hostname, pathname } = pageUrl;
-  const formattedUrl = `${hostname}${(pathname !== '/') ? pathname : ''}`;
-  const pageFilename = convertUrlToFilename(formattedUrl);
+  const link = `${pageUrl.hostname}${pageUrl.pathname}`;
+  const pageFilename = convertLinkToFilename(link);
   const pageFilepath = buildPath(outputDir, pageFilename);
-  const resourceDir = convertUrlToDirname(formattedUrl);
+  const resourceDir = convertLinkToDirname(link);
   const resourceDirpath = buildPath(outputDir, resourceDir);
-  return load(pageUrl.toString())
+  return loadData(pageUrl.toString())
     .then((data) => fsp.mkdir(resourceDirpath)
-      .then(() => processingResources(pageUrl, data, resourceDir)))
+      .then(() => processingResources(pageUrl.origin, data, resourceDir)))
     .then(({ page, resources }) => fsp.writeFile(pageFilepath, page)
       .then(() => resources))
     .then((resources) => {
-      const promises = resources.map(({ resourceUrl, relativeFilepath }) => {
+      const promises = resources.map(({ url, relativeFilepath }) => {
         const resourceFilepath = buildPath(outputDir, relativeFilepath);
-        return load(resourceUrl.toString()).then((data) => fsp.writeFile(resourceFilepath, data));
+        return loadData(url.toString()).then((data) => fsp.writeFile(resourceFilepath, data));
       });
       return Promise.all(promises);
     });

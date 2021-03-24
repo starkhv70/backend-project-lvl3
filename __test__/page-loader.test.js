@@ -21,7 +21,7 @@ let resources = [
   {
     tag: 'img',
     resourcePath: '/assets/professions/nodejs.png',
-    filename: 'assets-professions-nodejs.png',
+    filename: 'ru-hexlet-io-assets-professions-nodejs.png',
   },
   {
     tag: 'link',
@@ -30,49 +30,46 @@ let resources = [
   },
   {
     tag: 'script',
-    resourcePath: 'https://ru.hexlet.io/packs/js/runtime.js',
+    resourcePath: '/packs/js/runtime.js',
     filename: 'ru-hexlet-io-packs-js-runtime.js',
   },
 ];
 const resourceFilenames = resources.map(({ filename }) => [filename]);
 
 const getFixturePath = (...paths) => path.join(__dirname, '..', '__fixtures__', ...paths);
-const readFile = (...paths) => fsp.readFile(getFixturePath(...paths), 'utf-8');
+const readFixtureFile = (...paths) => fsp.readFile(getFixturePath(...paths), 'utf-8');
 
 nock.disableNetConnect();
 
 beforeAll(async () => {
   tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-  const originalHTML = await readFile(pageFileName);
-  expectedHTML = await readFile('expected', pageFileName);
+  const originalHTML = await readFixtureFile(pageFileName);
+  expectedHTML = await readFixtureFile('expected', pageFileName);
   scope
     .get(relativePath)
     .reply(200, originalHTML.trim())
     .get(wrongRelativePath)
     .reply(404, '');
 
-  const promises = resources.map((resource) => readFile('expected', resourceDir, resource.filename)
+  const promises = resources.map((resource) => readFixtureFile('expected', resourceDir, resource.filename)
     .then((data) => ({ ...resource, data })));
   resources = await Promise.all(promises);
 
-  resources.forEach(({ resourcePath, data }) => scope
-    .get(resourcePath)
-    .reply(200, data));
+  resources.forEach(({ resourcePath, data }) => scope.get(resourcePath).reply(200, data));
 });
 
 test('load page', async (done) => {
   const filepath = path.join(tmpDir, pageFileName);
-
   await pageLoader(pageUrl, tmpDir);
   const HTMLbody = await fsp.readFile(filepath, 'utf-8');
   expect(HTMLbody).toEqual(expectedHTML.trim());
   done();
 });
 
-test.each(resourceFilenames)('loaded resources to file: %s', async (filename) => {
+test.each(resourceFilenames)('load resource to file: %s', async (filename) => {
   const filepath = path.join(tmpDir, resourceDir, filename);
   const content = await fsp.readFile(filepath, 'utf-8');
-  const expectedContent = await readFile('expected', filename);
+  const expectedContent = await readFixtureFile('expected', resourceDir, filename);
   expect(content).toEqual(expectedContent);
 });
 

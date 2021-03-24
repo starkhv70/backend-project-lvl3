@@ -8,13 +8,15 @@ const tagAttributeMap = {
   script: 'src',
 };
 
-const convertName = (pageUrl) => `${pageUrl.replace(/[^A-Za-z0-9]/g, '-')}`;
+const convertName = (pageUrl) => pageUrl.match(/\w*/gi)
+  .filter((w) => w.length > 0)
+  .join('-');
 
-export const convertUrlToFilename = (pageUrl, fileExt = '.html') => `${convertName(pageUrl)}${fileExt}`;
+export const convertLinkToFilename = (pageUrl, fileExt = '.html') => `${convertName(pageUrl)}${fileExt}`;
 
-export const convertUrlToDirname = (pageUrl, postfix = '_files') => `${convertName(pageUrl)}${postfix}`;
+export const convertLinkToDirname = (pageUrl, postfix = '_files') => `${convertName(pageUrl)}${postfix}`;
 
-export const load = (url) => axios.get(url, {
+export const loadData = (url) => axios.get(url, {
   responseType: 'arraybuffer',
 }).then(({ data }) => data);
 
@@ -22,21 +24,27 @@ export const buildPath = (outputDir, relativePath) => path.resolve(outputDir, re
 
 const buildResourceFilepath = (hostname, resourceDir, resourcePath) => {
   const { dir, name, ext } = path.parse(resourcePath);
-  const resourceFilename = convertUrlToFilename(`${hostname}${dir}/${name}`, ext);
+  const fileExt = ext || '.html';
+  const resourceFilename = convertLinkToFilename(`${hostname}${dir}/${name}`, fileExt);
   return path.join(resourceDir, resourceFilename);
 };
 
-export const processingResources = (pageurl, htmlData, resourceDir) => {
+export const processingResources = (origin, htmlData, resourceDir) => {
   const $ = cheerio.load(htmlData);
-  const tags = Object.keys(tagAttributeMap);
-  const tagsWithResources = tags.flatMap((tag) => $(`${tag}`).toArray());
+  const tagsWithResources = Object.keys(tagAttributeMap)
+    .flatMap((tagName) => $(`${tagName}`).toArray()
+      .filter((element) => {
+        const url = new URL($(element).attr(tagAttributeMap[tagName]), origin);
+        return url.origin === origin;
+      }));
+
   const resources = tagsWithResources.map((tag) => {
     const attrName = tagAttributeMap[tag.name];
     const relativePath = $(tag).attr(attrName);
-    const resourceUrl = new URL(relativePath, pageurl);
-    const relativeFilepath = buildResourceFilepath(pageurl.hostname, resourceDir, relativePath);
+    const url = new URL(relativePath, origin);
+    const relativeFilepath = buildResourceFilepath(url.hostname, resourceDir, url.pathname);
     $(tag).attr(attrName, relativeFilepath);
-    return { resourceUrl, relativeFilepath };
+    return { url, relativeFilepath };
   });
   return { page: $.html(), resources };
 };
