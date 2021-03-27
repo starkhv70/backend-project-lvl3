@@ -19,8 +19,8 @@ const pageLoader = (pageUrl, outputDir = process.cwd()) => {
     .then(({ page, resources }) => fsp.writeFile(pageFilepath, page)
       .then(() => resources))
     .then((resources) => {
-      const promises = resources.map(({ url, relativeFilepath }) => {
-        const resourceFilepath = buildPath(outputDir, relativeFilepath);
+      const promises = resources.map(({ url, filepath }) => {
+        const resourceFilepath = buildPath(outputDir, filepath);
         return loadData(url.toString()).then((data) => fsp.writeFile(resourceFilepath, data));
       });
       return Promise.all(promises);

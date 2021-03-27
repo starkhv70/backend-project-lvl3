@@ -31,20 +31,21 @@ const buildResourceFilepath = (hostname, resourceDir, resourcePath) => {
 
 export const processingResources = (origin, htmlData, resourceDir) => {
   const $ = cheerio.load(htmlData);
-  const tagsWithResources = Object.keys(tagAttributeMap)
-    .flatMap((tagName) => $(`${tagName}`).toArray()
-      .filter((element) => {
-        const url = new URL($(element).attr(tagAttributeMap[tagName]), origin);
-        return url.origin === origin;
+  const tagWithResources = Object.keys(tagAttributeMap)
+    .flatMap((tagName) => $(tagName).toArray()
+      .map((tag) => {
+        const url = new URL($(tag).attr(tagAttributeMap[tagName]), origin);
+        return { tag, url };
+      })
+      .filter(({ url }) => url.origin === origin)
+      .map(({ tag, url }) => {
+        const filepath = buildResourceFilepath(url.hostname, resourceDir, url.pathname);
+        return { tag, url, filepath };
       }));
-
-  const resources = tagsWithResources.map((tag) => {
+  tagWithResources.forEach(({ tag, filepath }) => {
     const attrName = tagAttributeMap[tag.name];
-    const relativePath = $(tag).attr(attrName);
-    const url = new URL(relativePath, origin);
-    const relativeFilepath = buildResourceFilepath(url.hostname, resourceDir, url.pathname);
-    $(tag).attr(attrName, relativeFilepath);
-    return { url, relativeFilepath };
+    $(tag).attr(attrName, filepath);
   });
+  const resources = tagWithResources.map(({ url, filepath }) => ({ url, filepath }));
   return { page: $.html(), resources };
 };

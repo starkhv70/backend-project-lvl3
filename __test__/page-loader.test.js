@@ -58,12 +58,11 @@ beforeAll(async () => {
   resources.forEach(({ resourcePath, data }) => scope.get(resourcePath).reply(200, data));
 });
 
-test('load page', async (done) => {
+test('load page', async () => {
   const filepath = path.join(tmpDir, pageFileName);
   await pageLoader(pageUrl, tmpDir);
   const HTMLbody = await fsp.readFile(filepath, 'utf-8');
   expect(HTMLbody).toEqual(expectedHTML.trim());
-  done();
 });
 
 test.each(resourceFilenames)('load resource to file: %s', async (filename) => {
