@@ -14,7 +14,7 @@ const tagAttributeMap = {
   script: 'src',
 };
 
-const processingResources = (origin, htmlData, resourceDir) => {
+const processResources = (origin, htmlData, resourceDir) => {
   const $ = cheerio.load(htmlData);
   const tagWithResources = Object.keys(tagAttributeMap)
     .flatMap((tagName) => $(tagName).toArray()
@@ -44,7 +44,7 @@ const pageLoader = (pageLink, outputDir = process.cwd()) => {
   const resourceDirpath = buildPath(outputDir, resourceDir);
   return loadData(pageUrl.toString())
     .then((data) => fsp.mkdir(resourceDirpath)
-      .then(() => processingResources(pageUrl.origin, data, resourceDir)))
+      .then(() => processResources(pageUrl.origin, data, resourceDir)))
     .then(({ page, resources }) => fsp.writeFile(pageFilepath, page)
       .then(() => resources))
     .then((resources) => {
