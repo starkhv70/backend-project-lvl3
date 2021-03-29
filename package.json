@@ -7,6 +7,10 @@
   "bin": {
     "page-loader": "bin/page-loader.js"
   },
+  "engines": {
+    "node": ">=14",
+    "npm": ">=7"
+  },
   "jest": {
     "testEnvironment": "node",
     "transform": {},
