@@ -1,5 +1,6 @@
 import { promises as fsp } from 'fs';
 import cheerio from 'cheerio';
+import debug from 'debug';
 import {
   convertLinkToFilename,
   convertLinkToDirname,
@@ -7,6 +8,8 @@ import {
   buildResourceFilepath,
   loadData,
 } from './util.js';
+
+const log = debug('page-loader');
 
 const tagAttributeMap = {
   img: 'src',
@@ -42,15 +45,23 @@ const pageLoader = (pageLink, outputDir = process.cwd()) => {
   const pageFilepath = buildPath(outputDir, pageFilename);
   const resourceDir = convertLinkToDirname(link);
   const resourceDirpath = buildPath(outputDir, resourceDir);
+  log('Page %s will be download to %s', link, pageFilepath);
   return loadData(pageUrl.toString())
     .then((data) => fsp.mkdir(resourceDirpath)
       .then(() => processResources(pageUrl.origin, data, resourceDir)))
-    .then(({ page, resources }) => fsp.writeFile(pageFilepath, page)
-      .then(() => resources))
+    .then(({ page, resources }) => {
+      log('Save web page to file', pageFilepath);
+      return fsp.writeFile(pageFilepath, page)
+        .then(() => resources);
+    })
     .then((resources) => {
       const promises = resources.map(({ url, filepath }) => {
         const resourceFilepath = buildPath(outputDir, filepath);
-        return loadData(url.toString()).then((data) => fsp.writeFile(resourceFilepath, data));
+        log('Resource %s will be download to %s', url.toString(), resourceFilepath);
+        return loadData(url.toString()).then((data) => {
+          log('save resourse to file', resourceFilepath);
+          return fsp.writeFile(resourceFilepath, data);
+        });
       });
       return Promise.all(promises);
     });
