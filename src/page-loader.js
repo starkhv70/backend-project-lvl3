@@ -19,8 +19,8 @@ const tagAttributeMap = {
 
 const processResources = (origin, htmlData, resourceDir) => {
   const $ = cheerio.load(htmlData);
-  const tagWithResources = Object.keys(tagAttributeMap)
-    .flatMap((tagName) => $(tagName).toArray()
+  const tagWithResources = Object.entries(tagAttributeMap)
+    .flatMap(([tagName, attrName]) => $(`${tagName}[${attrName}]`).toArray()
       .map((tag) => {
         const url = new URL($(tag).attr(tagAttributeMap[tagName]), origin);
         return { tag, url };
@@ -47,7 +47,7 @@ const pageLoader = (pageLink, outputDir = process.cwd()) => {
   const resourceDirpath = buildPath(outputDir, resourceDir);
   log('Page %s will be download to %s', link, pageFilepath);
   return loadData(pageUrl.toString())
-    .then((data) => fsp.mkdir(resourceDirpath)
+    .then((data) => fsp.mkdir(resourceDirpath, { recursive: true })
       .then(() => processResources(pageUrl.origin, data, resourceDir)))
     .then(({ page, resources }) => {
       log('Save web page to file', pageFilepath);
@@ -64,7 +64,8 @@ const pageLoader = (pageLink, outputDir = process.cwd()) => {
         });
       });
       return Promise.all(promises);
-    });
+    })
+    .then(() => ({ pageFilepath }));
 };
 
 export default pageLoader;
