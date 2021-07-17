@@ -12,9 +12,10 @@ lint:
 test:
 	npm test
 
+test-debug:
+	DEBUG=page-loader npm test
+
 test-coverage:
 	npm test -- --coverage --coverageProvider=v8
 
-test-update-shapshot:
-	npm test -- -u
 
