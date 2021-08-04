@@ -45,10 +45,14 @@ const pageLoader = (pageLink, outputDir = process.cwd()) => {
   const pageFilepath = buildPath(outputDir, pageFilename);
   const resourceDir = convertLinkToDirname(link);
   const resourceDirpath = buildPath(outputDir, resourceDir);
-  log('Page %s will be download to %s', link, pageFilepath);
+  log('Input value: url: %s, download to: %s', pageLink, outputDir);
+  log('Load page: %s', pageLink);
   return loadData(pageUrl.toString())
-    .then((data) => fsp.mkdir(resourceDirpath, { recursive: true })
-      .then(() => processResources(pageUrl.origin, data, resourceDir)))
+    .then((data) => {
+      log('Create resource dir:', resourceDirpath);
+      return fsp.mkdir(resourceDirpath, { recursive: true })
+        .then(() => processResources(pageUrl.origin, data, resourceDir));
+    })
     .then(({ page, resources }) => {
       log('Save web page to file', pageFilepath);
       return fsp.writeFile(pageFilepath, page)
@@ -57,11 +61,9 @@ const pageLoader = (pageLink, outputDir = process.cwd()) => {
     .then((resources) => {
       const promises = resources.map(({ url, filepath }) => {
         const resourceFilepath = buildPath(outputDir, filepath);
-        log('Resource %s will be download to %s', url.toString(), resourceFilepath);
-        return loadData(url.toString()).then((data) => {
-          log('save resourse to file', resourceFilepath);
-          return fsp.writeFile(resourceFilepath, data);
-        });
+        log('Download resource %s  to file %s', url.toString(), resourceFilepath);
+        return loadData(url.toString())
+          .then((data) => fsp.writeFile(resourceFilepath, data));
       });
       return Promise.all(promises);
     })
