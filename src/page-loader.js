@@ -21,8 +21,9 @@ const processResources = (origin, htmlData, resourceDir) => {
   const $ = cheerio.load(htmlData);
   const tagWithResources = Object.entries(tagAttributeMap)
     .flatMap(([tagName, attrName]) => $(`${tagName}[${attrName}]`).toArray()
-      .map((tag) => {
-        const url = new URL($(tag).attr(tagAttributeMap[tagName]), origin);
+      .map((tagWithAttr) => {
+        const tag = $(tagWithAttr);
+        const url = new URL(tag.attr(tagAttributeMap[tagName]), origin);
         return { tag, url };
       })
       .filter(({ url }) => url.origin === origin)
@@ -31,8 +32,8 @@ const processResources = (origin, htmlData, resourceDir) => {
         return { tag, url, filepath };
       }));
   tagWithResources.forEach(({ tag, filepath }) => {
-    const attrName = tagAttributeMap[tag.name];
-    $(tag).attr(attrName, filepath);
+    const attrName = tagAttributeMap[tag.get(0).tagName];
+    tag.attr(attrName, filepath);
   });
   const resources = tagWithResources.map(({ url, filepath }) => ({ url, filepath }));
   return { page: $.html(), resources };
