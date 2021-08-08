@@ -74,7 +74,7 @@ test.each(resourceFilenames)('load resource to file: %s', async (filename) => {
 
 test('Handling file systems errors', async () => {
   const inaccesibleDir = '/etc';
-  const unavalibleFilepath = path.join(tmpDir, 'unavalible');
+  const unavalibleFilepath = '/unavalibleFilepath';
 
   expect(pageLoader(pageUrl.toString(), inaccesibleDir)).rejects.toThrow();
   expect(pageLoader(pageUrl.toString(), unavalibleFilepath)).rejects.toThrow();
@@ -89,5 +89,5 @@ test('Handling network errors', async () => {
 });
 
 afterAll(async () => {
-  await fsp.rmdir(tmpDir, { recursive: true });
+  await fsp.rmdir(tmpDir, { recursive: true, maxRetries: 5 });
 });

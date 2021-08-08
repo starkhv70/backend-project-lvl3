@@ -1,4 +1,5 @@
 import axios from 'axios';
+import 'axios-debug-log';
 import path from 'path';
 
 const convertName = (pageUrl) => pageUrl.match(/\w*/gi)

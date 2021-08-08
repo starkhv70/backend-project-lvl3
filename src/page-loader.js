@@ -1,5 +1,6 @@
 import { promises as fsp } from 'fs';
 import cheerio from 'cheerio';
+import debug from 'debug';
 import {
   convertLinkToFilename,
   convertLinkToDirname,
@@ -7,6 +8,8 @@ import {
   buildResourceFilepath,
   loadData,
 } from './util.js';
+
+const log = debug('page-loader');
 
 const tagAttributeMap = {
   img: 'src',
@@ -16,10 +19,11 @@ const tagAttributeMap = {
 
 const processResources = (origin, htmlData, resourceDir) => {
   const $ = cheerio.load(htmlData);
-  const tagWithResources = Object.keys(tagAttributeMap)
-    .flatMap((tagName) => $(tagName).toArray()
-      .map((tag) => {
-        const url = new URL($(tag).attr(tagAttributeMap[tagName]), origin);
+  const tagWithResources = Object.entries(tagAttributeMap)
+    .flatMap(([tagName, attrName]) => $(`${tagName}[${attrName}]`).toArray()
+      .map((tagWithAttr) => {
+        const tag = $(tagWithAttr);
+        const url = new URL(tag.attr(tagAttributeMap[tagName]), origin);
         return { tag, url };
       })
       .filter(({ url }) => url.origin === origin)
@@ -28,8 +32,8 @@ const processResources = (origin, htmlData, resourceDir) => {
         return { tag, url, filepath };
       }));
   tagWithResources.forEach(({ tag, filepath }) => {
-    const attrName = tagAttributeMap[tag.name];
-    $(tag).attr(attrName, filepath);
+    const attrName = tagAttributeMap[tag.get(0).tagName];
+    tag.attr(attrName, filepath);
   });
   const resources = tagWithResources.map(({ url, filepath }) => ({ url, filepath }));
   return { page: $.html(), resources };
@@ -42,18 +46,29 @@ const pageLoader = (pageLink, outputDir = process.cwd()) => {
   const pageFilepath = buildPath(outputDir, pageFilename);
   const resourceDir = convertLinkToDirname(link);
   const resourceDirpath = buildPath(outputDir, resourceDir);
+  log('Input value: url: %s, download to: %s', pageLink, outputDir);
+  log('Load page: %s', pageLink);
   return loadData(pageUrl.toString())
-    .then((data) => fsp.mkdir(resourceDirpath)
-      .then(() => processResources(pageUrl.origin, data, resourceDir)))
-    .then(({ page, resources }) => fsp.writeFile(pageFilepath, page)
-      .then(() => resources))
+    .then((data) => {
+      log('Create resource dir:', resourceDirpath);
+      return fsp.mkdir(resourceDirpath, { recursive: true })
+        .then(() => processResources(pageUrl.origin, data, resourceDir));
+    })
+    .then(({ page, resources }) => {
+      log('Save web page to file', pageFilepath);
+      return fsp.writeFile(pageFilepath, page)
+        .then(() => resources);
+    })
     .then((resources) => {
       const promises = resources.map(({ url, filepath }) => {
         const resourceFilepath = buildPath(outputDir, filepath);
-        return loadData(url.toString()).then((data) => fsp.writeFile(resourceFilepath, data));
+        log('Download resource %s  to file %s', url.toString(), resourceFilepath);
+        return loadData(url.toString())
+          .then((data) => fsp.writeFile(resourceFilepath, data));
       });
       return Promise.all(promises);
-    });
+    })
+    .then(() => ({ pageFilepath }));
 };
 
 export default pageLoader;
