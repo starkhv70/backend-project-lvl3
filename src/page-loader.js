@@ -70,7 +70,7 @@ const pageLoader = (pageLink, outputDir = process.cwd()) => {
             .then((data) => fsp.writeFile(resourceFilepath, data)),
         };
       });
-      const listr = new Listr(tasks, { concurrent: true, exitOnError: false });
+      const listr = new Listr(tasks, { concurrent: true });
       return listr.run();
     })
     .then(() => ({ pageFilepath }));
