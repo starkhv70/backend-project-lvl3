@@ -76,16 +76,16 @@ test('Handling file systems errors', async () => {
   const inaccesibleDir = '/etc';
   const unavalibleFilepath = '/unavalibleFilepath';
 
-  expect(pageLoader(pageUrl.toString(), inaccesibleDir)).rejects.toThrow();
-  expect(pageLoader(pageUrl.toString(), unavalibleFilepath)).rejects.toThrow();
+  await expect(pageLoader(pageUrl.toString(), inaccesibleDir)).rejects.toThrow();
+  await expect(pageLoader(pageUrl.toString(), unavalibleFilepath)).rejects.toThrow();
 });
 
 test('Handling network errors', async () => {
   const badBaseUrl = 'https://localhost.io';
   const wrongPageUrl = new URL(wrongRelativePath, baseUrl);
 
-  expect(pageLoader(badBaseUrl, tmpDir)).rejects.toThrow();
-  expect(pageLoader(wrongPageUrl.toString(), tmpDir)).rejects.toThrow();
+  await expect(pageLoader(badBaseUrl, tmpDir)).rejects.toThrow();
+  await expect(pageLoader(wrongPageUrl.toString(), tmpDir)).rejects.toThrow();
 });
 
 afterAll(async () => {
