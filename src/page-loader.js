@@ -52,7 +52,7 @@ const pageLoader = (pageLink, outputDir = process.cwd()) => {
   return loadData(pageUrl.toString())
     .then((data) => {
       log('Create resource dir:', resourceDirpath);
-      return fsp.mkdir(resourceDirpath, { recursive: true })
+      return fsp.mkdir(resourceDirpath)
         .then(() => processResources(pageUrl.origin, data, resourceDir));
     })
     .then(({ page, resources }) => {
